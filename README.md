@@ -7,20 +7,20 @@ ros package for robot learning different grasping pose for different objects
 
 ## Installation
 
-'''bash
+```bash
 git clone https://github.com/himlen1990/multiple-grasping-pose-learning.git
-'''
+```
 
 ## Run
 
-'''bash
+```bash
 rosrun multiple_grasping_pose_learning demo
 roscd multiple_grasping_pose_learning/euslisp/
 roseus collect_data.l
-'''
+```
 
 ## After collected data
 
-'''bash
+```bash
 python labelme2voc /01 /voc --labels /01/labels.txt
-'''
+```
