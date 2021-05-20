@@ -3,7 +3,8 @@ import numpy as np
 import json
 import glob
 import os
-    
+from collections import OrderedDict
+
 if __name__ == "__main__":
     data_filename = []    
     data_content = []
@@ -31,26 +32,26 @@ if __name__ == "__main__":
             all_points_x = sampled_point[:,0].tolist()
             all_points_y = sampled_point[:,1].tolist()
 
-            region_attributes = dict(
-                object_index = object_index
-            )
+            region_attributes = OrderedDict([
+                ("object",object_index)
+            ])
             file_attributes = dict()
             labeltype = "polygon"
-            shape_attributes = dict(
-                name = labeltype,
-                all_points_x = all_points_x,
-                all_points_y = all_points_y,
-                region_attributes = region_attributes
-            )
-            regions = dict(
-                shape_attributes = shape_attributes
-            )
-            filedata = dict(
-                file_attributes = file_attributes,
-                filename = suffix,
-                size = size,
-                regions = [regions]
-            )
+            shape_attributes = OrderedDict([
+                ("name",labeltype),
+                ("all_points_x",all_points_x),
+                ("all_points_y", all_points_y)
+            ])
+            regions = OrderedDict([
+                ("shape_attributes",shape_attributes),
+                ("region_attributes",region_attributes)
+            ])
+            filedata = OrderedDict([
+                ("filename",suffix),
+                ("size",size),
+                ("regions", [regions]),
+                ("file_attributes", file_attributes)
+            ])
             
 
         

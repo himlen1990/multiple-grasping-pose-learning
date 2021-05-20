@@ -20,7 +20,6 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(OpenCV REQUIRED)
 find_package(PCL REQUIRED)
 
-find_library(ZBAR_LIBRARIES NAMES zbar)
 include_directories(${catkin_INCLUDE_DIRS})
 include_directories(${PCL_INCLUDE_DIRS})
 
@@ -43,5 +42,5 @@ CATKIN_DEPENDS roscpp message_runtime
 )
 
 
-add_executable(demo src/demo.cpp)
-target_link_libraries(demo ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS} zbar)
+add_executable(data_collection src/data_collection.cpp)
+target_link_libraries(data_collection ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})

@@ -1,5 +1,5 @@
 # multiple-grasping-pose-learning
-ros package for robot learning different grasping pose for different objects
+ros package for robot auto data collection and learning different grasping poses for different objects
 ---
 ## Environment
 ---
@@ -9,6 +9,8 @@ ros package for robot learning different grasping pose for different objects
 
 ```bash
 git clone https://github.com/himlen1990/multiple-grasping-pose-learning.git
+cd multiple-grasping-pose-learning/
+catkin -bt
 ```
 
 ## Run
@@ -22,5 +24,8 @@ roseus collect_data.l
 ## After collected data
 
 ```bash
-python labelme2voc /01 /voc --labels /01/labels.txt
+cd utils
+python label_generation_labelme_ver.py
+create a labels.txt file and add class names
+python labelme2voc ../dataset/rgb/01 ../dataset/rgb/voc --labels ../dataset/rgb/01/labels.txt
 ```
