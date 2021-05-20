@@ -14,11 +14,12 @@ follow the instruction in https://github.com/himlen1990/semantic_segmentation_tp
 ```bash
 cd ~/aerov_grasp_ws/src
 git clone https://github.com/himlen1990/multiple-grasping-pose-learning.git
-cd multiple-grasping-pose-learning/
+catkin build
 ```
 
 ## Run
 ```bash
+source ~/aerov_grasp_ws/devel/setup.bash
 rosrun multiple_grasping_pose_learning demo
 roscd multiple_grasping_pose_learning/euslisp/
 roseus collect_data.l
@@ -29,6 +30,6 @@ roseus collect_data.l
 ```bash
 cd utils
 python label_generation_labelme_ver.py
-create a labels.txt file and add class names
+~~~create a labels.txt file and add class names
 python labelme2voc ../dataset/rgb/01 ../dataset/rgb/voc --labels ../dataset/rgb/01/labels.txt
 ```
