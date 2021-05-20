@@ -5,16 +5,19 @@ ros package for robot auto data collection and learning different grasping poses
 ---
 - Ubuntu18.04 and ROS Melodic
 
-## Installation
+## Setup ROS Environment and Check Coral EdgeTPU
+
+follow the instruction in https://github.com/himlen1990/semantic_segmentation_tpu
+
+## build aero package
 
 ```bash
+cd ~/aerov_grasp_ws/src
 git clone https://github.com/himlen1990/multiple-grasping-pose-learning.git
 cd multiple-grasping-pose-learning/
-catkin -bt
 ```
 
 ## Run
-
 ```bash
 rosrun multiple_grasping_pose_learning demo
 roscd multiple_grasping_pose_learning/euslisp/
