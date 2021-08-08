@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="multiple_grasping_pose_learning" name="multiple_grasping_pose_learning" type="data_collection_turntable" output="screen">
+    <param name="start_obj_num" value="1" />
+  </node>
+</launch>

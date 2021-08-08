@@ -9,8 +9,10 @@
 #include <opencv2/aruco.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <pcl/filters/crop_box.h>
+#include <pcl/common/common.h>
 #include <tf/transform_listener.h>
 #include <multiple_grasping_pose_learning/getobjectpose.h>
+#include <std_srvs/Empty.h>
 #include <geometry_msgs/PointStamped.h>
 #include <std_msgs/String.h>
 #include <sys/stat.h>
@@ -24,7 +26,7 @@ typedef pcl::PointXYZRGB PCType;
 class aero_goods_grasping_demo
 {
 public:
-  ros::NodeHandle nh_;
+
   message_filters::Synchronizer<message_filters::sync_policies::ApproximateTime< sensor_msgs::Image, sensor_msgs::Image> >* sync_input_2_; 
   message_filters::Subscriber<sensor_msgs::Image> rgb_sub;
   message_filters::Subscriber<sensor_msgs::Image> depth_sub;
@@ -34,6 +36,7 @@ public:
   boost::array<double,9> camera_info;
   ros::Publisher my_pointcloud_pub;
   ros::ServiceServer systemService;
+  ros::ServiceServer saveImageService;
 
   float fx;
   float fy;
@@ -46,19 +49,22 @@ public:
   string robot_base_frame_;
   string robot_camera_frame_;
   pcl::PointCloud<PCType>::Ptr object_cloud;
+  pcl::PointCloud<PCType>::Ptr table_cloud;
   cv::Mat current_RGBImg_;
   cv::Mat current_DepthImg_;
   int data_counter_;
   int object_counter_;
+  float table_height_;
+  std::vector<cv::Point3f> bbox_3d_global_;
   
   std::string base_dir;
   std::string rgb_data_dir;
   std::string mask_data_dir;
   
-  aero_goods_grasping_demo(int argc, char** argv):camera_info{0}
+  aero_goods_grasping_demo(ros::NodeHandle nh_):camera_info{0}
   {
     //publish and subscribe
-    
+
     rgb_sub.subscribe(nh_, "/openni_camera/rgb/image_rect_color", 1);
     depth_sub.subscribe(nh_, "/openni_camera/depth_registered/hw_registered/image_rect_raw", 1);
     sync_input_2_ = new message_filters::Synchronizer<message_filters::sync_policies::ApproximateTime< sensor_msgs::Image,sensor_msgs::Image> >(10);
@@ -69,16 +75,28 @@ public:
     my_pointcloud_pub = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> > ("myoutput", 1);
 
     new_object_sub = nh_.subscribe("/aero_data_collection",1, &aero_goods_grasping_demo::new_object_cb,this);
+
     //services
     systemService = nh_.advertiseService("aero_goods_grasping_demo", &aero_goods_grasping_demo::srvCb, this);
+    saveImageService = nh_.advertiseService("/aero_new_image_collection", &aero_goods_grasping_demo::saveImgSrvCb, this);
 
     robot_base_frame_ = "/base_link";
     data_counter_ = 0;
-    object_counter_ = 1;
+    int start_obj_num = 1; 
+    if (nh_.hasParam("start_obj_num"))
+      {
+	nh_.getParam("start_obj_num", start_obj_num);
+      }
+    
+    object_counter_ = start_obj_num;
+    ROS_INFO("start collecting object from num %i", object_counter_);
     base_dir = ros::package::getPath("multiple_grasping_pose_learning");
-    rgb_data_dir = base_dir + "/dataset/rgb/01/";
-    mask_data_dir = base_dir + "/dataset/mask/01/";
-    rmdir(rgb_data_dir.c_str());
+    string rgb_data_dir_prefix = base_dir + "/dataset/rgb/";
+    string mask_data_dir_prefix  = base_dir + "/dataset/mask/";
+    char object_num[10];	
+    sprintf(object_num,"/%02d/", object_counter_);
+    rgb_data_dir = rgb_data_dir_prefix + object_num;
+    mask_data_dir = mask_data_dir_prefix + object_num;    
     if(!IsdirExist(rgb_data_dir.c_str()))
       mkdir(rgb_data_dir.c_str(),0777);
     if(!IsdirExist(mask_data_dir.c_str())) //remove old data
@@ -122,6 +140,7 @@ public:
 	ROS_INFO("collect data again, please delete old data");
 	data_counter_ = 0;
       }
+    
     else
       ROS_INFO("Undefined command %s ", message.data.c_str());
   }
@@ -251,29 +270,8 @@ public:
     return point3d_trans;
   }
   
-  cv::Mat get_target_obj_mask(std::vector<cv::Point> bbox_2d)
+  cv::Mat get_target_obj_mask(std::vector<cv::Point3f> bbox_3d)
   {
-    //compute 3d bounding box boundary
-    float min_x = 100;
-    float max_x = -100;
-    float min_y = 100;
-    float max_y = -100;
-    float min_z = -100;
-    for(int i=0; i< bbox_2d.size(); i++)
-      {
-	geometry_msgs::PointStamped point3d = point2d_to_point3d(bbox_2d[i]);
-	if(point3d.point.x < min_x)
-	  min_x = point3d.point.x;
-	if(point3d.point.y < min_y)
-	  min_y = point3d.point.y;
-	if(point3d.point.x > max_x)
-	  max_x = point3d.point.x;
-	if(point3d.point.y > max_y)
-	  max_y = point3d.point.y;
-	if(point3d.point.z > min_z) //take larger z to remove tabletop
-	  min_z = point3d.point.z + 0.04;
-
-      }
 
     //get and transform points within 2d bounding box
     pcl::PointCloud<PCType>::Ptr bbox_cloud(new pcl::PointCloud<PCType>());
@@ -309,11 +307,14 @@ public:
     pcl::PointCloud <PCType>::Ptr cloud_cropped (new pcl::PointCloud <PCType>);
     pcl::CropBox<PCType> boxFilter;
     
-    boxFilter.setMin(Eigen::Vector4f(min_x, min_y, min_z, 1.0));
-    boxFilter.setMax(Eigen::Vector4f(max_x, max_y, min_z+0.5, 1.0));
+    boxFilter.setMin(Eigen::Vector4f(bbox_3d[0].x, bbox_3d[0].y, bbox_3d[0].z, 1.0));
+    boxFilter.setMax(Eigen::Vector4f(bbox_3d[1].x, bbox_3d[1].y, bbox_3d[0].z+0.6, 1.0));
+    
     boxFilter.setInputCloud(cloud_trans);
     boxFilter.filter(*cloud_cropped);
 
+
+    
     cv::Mat mask = cv::Mat::zeros(current_RGBImg_.size(),current_RGBImg_.type());
     
     if(cloud_cropped->points.size()>0)
@@ -348,6 +349,86 @@ public:
       }
 
     return mask;
+
+  }
+
+  std::vector<cv::Point3f> get_3d_bbox(std::vector<cv::Point> bbox_2d)
+  {
+    //compute 3d bounding box boundary
+    float min_x = 100;
+    float max_x = -100;
+    float min_y = 100;
+    float max_y = -100;
+    float min_z = -100;
+    for(int i=0; i< bbox_2d.size(); i++)
+      {
+	geometry_msgs::PointStamped point3d = point2d_to_point3d(bbox_2d[i]);
+	if(point3d.point.x < min_x)
+	  min_x = point3d.point.x;
+	if(point3d.point.y < min_y)
+	  min_y = point3d.point.y;
+	if(point3d.point.x > max_x)
+	  max_x = point3d.point.x;
+	if(point3d.point.y > max_y)
+	  max_y = point3d.point.y;
+	if(point3d.point.z > min_z) //take larger z to remove tabletop
+	  min_z = point3d.point.z + 0.04;
+      }
+
+    //get and transform points within 2d bounding box
+    pcl::PointCloud<PCType>::Ptr bbox_cloud(new pcl::PointCloud<PCType>());
+    for(int i = 0; i < current_DepthImg_.cols; i++) {
+      for(int j = 0; j < current_DepthImg_.rows; j++) {
+	float z =  current_DepthImg_.at<float>(j,i);
+	if(z>0)
+	  {
+	    PCType point;
+	    point.x = (i-cx)*z*invfx;
+	    point.y = (j-cy)*z*invfy;
+	    point.z = z;
+	    point.r = current_RGBImg_.at<Vec3b>(j,i)[0];
+	    point.g = current_RGBImg_.at<Vec3b>(j,i)[1];
+	    point.b = current_RGBImg_.at<Vec3b>(j,i)[2];
+	    bbox_cloud->points.push_back(point);
+	  }    
+      }
+    }    
+    bbox_cloud->header.frame_id = robot_camera_frame_;
+    try{
+      listener_.waitForTransform(robot_base_frame_, robot_camera_frame_, ros::Time(0), ros::Duration(3.0));
+    }
+    catch (tf::TransformException ex){
+      ROS_ERROR("%s",ex.what());
+    }
+    pcl::PointCloud<PCType>::Ptr cloud_trans(new pcl::PointCloud<PCType>());
+    pcl_ros::transformPointCloud(robot_base_frame_, *bbox_cloud, *cloud_trans, listener_);
+    pcl::PointCloud <PCType>::Ptr cloud_cropped (new pcl::PointCloud <PCType>);
+    pcl::CropBox<PCType> boxFilter;   
+    boxFilter.setMin(Eigen::Vector4f(min_x, min_y, min_z, 1.0));
+    boxFilter.setMax(Eigen::Vector4f(max_x, max_y, min_z+0.5, 1.0));
+    boxFilter.setInputCloud(cloud_trans);
+    boxFilter.filter(*cloud_cropped);
+    std::vector<cv::Point3f> bbox_3d;
+    bbox_3d.push_back(cv::Point3f(-1,-1,-1));
+    if(cloud_cropped->points.size()>0)
+      {
+	std::vector<int> nan_indices;
+	pcl::removeNaNFromPointCloud(*cloud_cropped, *cloud_cropped, nan_indices);
+
+	table_cloud = cloud_cropped;
+	table_cloud->header.frame_id = robot_base_frame_;
+
+	// find_table_height
+	pcl::PointXYZ minpt;
+	pcl::PointXYZ maxpt;
+	pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud_xyz(new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::copyPointCloud(*cloud_cropped, *temp_cloud_xyz);//xyzrgb to xyz for the getminmax function
+	pcl::getMinMax3D(*temp_cloud_xyz,minpt,maxpt);
+
+	bbox_3d[0] = cv::Point3f(min_x,min_y,maxpt.z);//bbox should be higher than the table
+	bbox_3d.push_back(cv::Point3f(max_x,max_y,maxpt.z+0.6));//we do not care max_z
+      }
+	return bbox_3d;
   }
   
   bool srvCb(multiple_grasping_pose_learning::getobjectpose::Request& req, multiple_grasping_pose_learning::getobjectpose::Response& res)
@@ -386,17 +467,11 @@ public:
 	std::vector<cv::Point> bbox_2d;
 	bbox_2d.push_back(cv::Point(min_x_2d,min_y_2d));
 	bbox_2d.push_back(cv::Point(max_x_2d,max_y_2d));
-	cv::Mat obj_mask = get_target_obj_mask(bbox_2d);
-	char suffix[30];
-	//char maskfilename[30];
-	sprintf(suffix,"frame%02d.jpg", data_counter_);
-	//sprintf(maskfilename,"framemask%02d.jpg", data_counter_);
-	std::string rgb_path = rgb_data_dir + suffix;
-	std::string mask_path = mask_data_dir + suffix;
-	cv::imwrite(rgb_path,current_RGBImg_);
-	cv::imwrite(mask_path,obj_mask);
-	data_counter_++;
-	ROS_INFO("images are saved");
+	std::vector<cv::Point3f> bbox_3d = get_3d_bbox(bbox_2d);
+	if(bbox_3d[0].x == -1 && bbox_3d[0].y == -1 && bbox_3d[0].z == -1)
+	  return false;
+	bbox_3d_global_ = bbox_3d;
+
       }
 
     else
@@ -407,17 +482,36 @@ public:
     std::vector<float> result;
 #if 1
     Eigen::Vector4f objCentroid;
-    pcl::compute3DCentroid(*object_cloud,objCentroid);
+    pcl::compute3DCentroid(*table_cloud,objCentroid);
 
 #endif
     for(int i=0; i<3; i++)
       {
 	result.push_back(objCentroid(i)*1000); //m to mm in euslisp
-	//result.push_back(0); //m to mm in euslisp
-      }
-    
+      }    
     res.GraspPose = result;
     return true;      
+  }
+
+  bool saveImgSrvCb(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
+  {
+    if(bbox_3d_global_.empty())
+      {
+	bbox_3d_global_.push_back(cv::Point3f(-1,-1,-1)); //avoid segment fault
+	return false;
+      }
+    cv::Mat obj_mask = get_target_obj_mask(bbox_3d_global_);
+    char suffix[30];
+    //char maskfilename[30];
+    sprintf(suffix,"frame%02d.jpg", data_counter_);
+    //sprintf(maskfilename,"framemask%02d.jpg", data_counter_);
+    std::string rgb_path = rgb_data_dir + suffix;
+    std::string mask_path = mask_data_dir + suffix;
+    cv::imwrite(rgb_path,current_RGBImg_);
+    cv::imwrite(mask_path,obj_mask);
+    data_counter_++;
+    ROS_INFO("images are saved");
+    return true;
   }
   
 };
@@ -425,7 +519,9 @@ public:
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "aero_goods_grasping_demo");
-  aero_goods_grasping_demo demo(argc, argv);
+
+  ros::NodeHandle nh_ = ros::NodeHandle("~");
+  aero_goods_grasping_demo demo(nh_);
   ros:: Rate r(10);
   ros::spin();
   return 0;

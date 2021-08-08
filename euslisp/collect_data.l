@@ -45,7 +45,7 @@
   )
 
 (defun grasp()
-  (send *co* :translate (float-vector 130 0 0))
+  (send *co* :translate (float-vector 130 30 0))
   (send *robot* :inverse-kinematics
 	*co*
 	:ik-group :rarm-upper-body :rotation-axis t
@@ -81,7 +81,7 @@
     pre_release_pose
     ))
 
-(defun collect_data()
+(defun collect_data_once()
   (pregrasp)
   (unix:usleep(* 8000 1000))
   (grasp)
@@ -104,8 +104,15 @@
   (setq pre_release_pose (rotation))
   )
 
+(defun collect_data()
+  (collect_data_once)
+  (unix:usleep(* 6000 1000))
+  (collect_data_once)
+)
 
 (setup)
-;;(collect_data)
+;;(collect_data_once)
 ;;(unix:usleep(* 6000 1000))
-;;(collect_data)
+;;(collect_data_once)
+(send *robot* :reset-pose)
+(send *ri* :angle-vector (send *robot* :angle-vector) 6000)

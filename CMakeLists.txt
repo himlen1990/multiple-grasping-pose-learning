@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   geometry_msgs
   image_transport
+  std_srvs
   )
 
 find_package(OpenCV REQUIRED)
@@ -44,3 +45,6 @@ CATKIN_DEPENDS roscpp message_runtime
 
 add_executable(data_collection src/data_collection.cpp)
 target_link_libraries(data_collection ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})
+
+add_executable(data_collection_turntable src/data_collection_turntable.cpp)
+target_link_libraries(data_collection_turntable ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})
