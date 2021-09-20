@@ -17,16 +17,16 @@
 
 (defun get_table();;to get the height of the table, do not put any objects on the table before running this function
   (let (res
-	get-obj-pose-srv
+	get-table-pose-srv
 	obj-pose-res
 	pose)
     
-    (setq get-obj-pose-srv (instance multiple_grasping_pose_learning::getobjectposeRequest :init
+    (setq get-obj-pose-srv (instance multiple_grasping_pose_learning::gettableposeRequest :init
 				    :command "from euslisp"))
     (setq obj-pose-res (ros::service-call
 			"aero_goods_grasping_demo"
 			get-obj-pose-srv))
-    (setq pose (send obj-pose-res :GraspPose))
+    (setq pose (send obj-pose-res :Pose))
     (format t "~A~%" pose)
     pose
     ))

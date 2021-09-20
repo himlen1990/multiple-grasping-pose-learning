@@ -1,0 +1,3 @@
+float32[] TargetObjectFlatPointCloud
+---
+float32[] GraspingPose

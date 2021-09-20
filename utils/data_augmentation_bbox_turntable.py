@@ -10,7 +10,7 @@ from collections import OrderedDict
 from dict2xml import dict2xml
 
 rgb_data_path = "../dataset/rgb"
-background_data_path = "../dataset/pure_background"
+background_data_path = "../dataset/background"
 augmented_data_path = "../dataset/aug_data"
 background_imgs = []
 

@@ -1,0 +1,2 @@
+install rospkg within the conda environment
+pip install -U rospkg

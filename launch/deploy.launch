@@ -1,0 +1,9 @@
+<launch>
+  <node pkg="multiple_grasping_pose_learning" name="multiple_grasping_pose_learning_obj_server" type="object_detection_server.py" output="screen">
+    <param name="model_path" value="$(find multiple_grasping_pose_learning)/models/my_object_detection.tflite" />
+    <param name="label_path" value="$(find multiple_grasping_pose_learning)/models/my_label.txt" />
+    <param name="score_threshold" value="0.6" />
+    <param name="tile_sizes" value="750x500,300x300,250x250" />
+  </node>
+    <node pkg="multiple_grasping_pose_learning" name="multiple_grasping_pose_learning_deploy" type="deploy" output="screen" />	
+</launch>

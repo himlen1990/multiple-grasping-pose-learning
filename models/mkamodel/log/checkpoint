@@ -1,0 +1,4 @@
+model_checkpoint_path: "model.ckpt"
+all_model_checkpoint_paths: "../logfinal100/model.ckpt"
+all_model_checkpoint_paths: "../logfinal150/model.ckpt"
+all_model_checkpoint_paths: "model.ckpt"

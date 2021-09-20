@@ -1,0 +1,5 @@
+# TF 1.4 - 1.11
+#g++ -std=c++11 tf_sampling.cpp  -o tf_sampling2_so.so -shared -fPIC -I /usr/local/lib/python2.7/dist-packages/tensorflow/include  -I /usr/local/lib/python2.7/dist-packages/tensorflow/include/external/nsync/public -L/usr/local/lib/python2.7/dist-packages/tensorflow -ltensorflow_framework -O2 -D_GLIBCXX_USE_CXX11_ABI=0
+
+g++ -std=c++11 tf_sampling.cpp  -o tf_sampling2_so.so -shared -fPIC -I /home/himlen/anaconda3/envs/tf1.14/lib/python2.7/site-packages/tensorflow/include  -I /home/himlen/anaconda3/envs/tf1.14/lib/python2.7/site-packages/tensorflow/include/external/nsync/public -L/home/himlen/anaconda3/envs/tf1.14/lib/python2.7/site-packages/tensorflow -ltensorflow_framework -O2 -D_GLIBCXX_USE_CXX11_ABI=0
+

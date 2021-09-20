@@ -15,25 +15,29 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   geometry_msgs
   image_transport
+  image_geometry
   std_srvs
   )
 
 find_package(OpenCV REQUIRED)
 find_package(PCL REQUIRED)
 
-include_directories(${catkin_INCLUDE_DIRS})
 include_directories(${PCL_INCLUDE_DIRS})
-
-
+include_directories(${catkin_INCLUDE_DIRS})
+link_directories(${catkin_LIBRARY_DIRS})
 
 add_service_files(
   FILES
-  getobjectpose.srv
+  gettablepose.srv
+  graspanobject.srv
+  objectdetect.srv
+  grasppredict.srv
   )
 
 generate_messages(
   DEPENDENCIES
   std_msgs
+  sensor_msgs
   )
 
 catkin_package(
@@ -43,8 +47,11 @@ CATKIN_DEPENDS roscpp message_runtime
 )
 
 
-add_executable(data_collection src/data_collection.cpp)
-target_link_libraries(data_collection ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})
-
 add_executable(data_collection_turntable src/data_collection_turntable.cpp)
 target_link_libraries(data_collection_turntable ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})
+
+add_executable(deploy src/deploy.cpp)
+target_link_libraries(deploy ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})
+
+add_executable(get_point_position utils/get_point_position.cpp)
+target_link_libraries(get_point_position ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})

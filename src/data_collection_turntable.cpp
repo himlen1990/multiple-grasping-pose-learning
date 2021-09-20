@@ -11,13 +11,13 @@
 #include <pcl/filters/crop_box.h>
 #include <pcl/common/common.h>
 #include <tf/transform_listener.h>
-#include <multiple_grasping_pose_learning/getobjectpose.h>
+#include <multiple_grasping_pose_learning/gettablepose.h>
 #include <std_srvs/Empty.h>
 #include <geometry_msgs/PointStamped.h>
 #include <std_msgs/String.h>
 #include <sys/stat.h>
-
-
+#include <pcl/io/ply_io.h>
+#include <pcl/filters/radius_outlier_removal.h>
 
 using namespace std;
 using namespace cv;
@@ -60,6 +60,7 @@ public:
   std::string base_dir;
   std::string rgb_data_dir;
   std::string mask_data_dir;
+  std::string pointcloud_data_dir;
   
   aero_goods_grasping_demo(ros::NodeHandle nh_):camera_info{0}
   {
@@ -91,16 +92,21 @@ public:
     object_counter_ = start_obj_num;
     ROS_INFO("start collecting object from num %i", object_counter_);
     base_dir = ros::package::getPath("multiple_grasping_pose_learning");
-    string rgb_data_dir_prefix = base_dir + "/dataset/rgb/";
-    string mask_data_dir_prefix  = base_dir + "/dataset/mask/";
+    string rgb_data_dir_prefix = base_dir + "/dataset/rgb";
+    string mask_data_dir_prefix = base_dir + "/dataset/mask";
+    string pointcloud_data_dir_prefix  = base_dir + "/dataset/pointcloud";
     char object_num[10];	
     sprintf(object_num,"/%02d/", object_counter_);
     rgb_data_dir = rgb_data_dir_prefix + object_num;
-    mask_data_dir = mask_data_dir_prefix + object_num;    
+    mask_data_dir = mask_data_dir_prefix + object_num;
+    pointcloud_data_dir = pointcloud_data_dir_prefix + object_num;
     if(!IsdirExist(rgb_data_dir.c_str()))
       mkdir(rgb_data_dir.c_str(),0777);
-    if(!IsdirExist(mask_data_dir.c_str())) //remove old data
+    if(!IsdirExist(mask_data_dir.c_str()))
       mkdir(mask_data_dir.c_str(),0777);
+    if(!IsdirExist(pointcloud_data_dir.c_str()))
+      mkdir(pointcloud_data_dir.c_str(),0777);
+
   }
   
   int IsdirExist(const char *path)
@@ -129,11 +135,17 @@ public:
 	mask_data_dir = mask_data_dir_prefix + object_num;
 	string rgb_data_dir_prefix = rgb_data_dir.substr(0,rgb_data_dir.length()-3);
 	rgb_data_dir = rgb_data_dir_prefix + object_num;
+	string pointcloud_data_dir_prefix = pointcloud_data_dir.substr(0,pointcloud_data_dir.length()-3);
+	pointcloud_data_dir = pointcloud_data_dir_prefix + object_num;
 
-	if(!IsdirExist(rgb_data_dir.c_str())) //remove old data
+	
+	if(!IsdirExist(rgb_data_dir.c_str()))
 	  mkdir(rgb_data_dir.c_str(),0777);
-	if(!IsdirExist(mask_data_dir.c_str())) //remove old data
+	if(!IsdirExist(mask_data_dir.c_str()))
 	  mkdir(mask_data_dir.c_str(),0777);
+	if(!IsdirExist(pointcloud_data_dir.c_str()))
+	  mkdir(pointcloud_data_dir.c_str(),0777);
+
       }
     else if(message.data=="do again")
       {
@@ -313,18 +325,31 @@ public:
     boxFilter.setInputCloud(cloud_trans);
     boxFilter.filter(*cloud_cropped);
 
-
-    
     cv::Mat mask = cv::Mat::zeros(current_RGBImg_.size(),current_RGBImg_.type());
     
     if(cloud_cropped->points.size()>0)
       {
+	//remove outliers
+	pcl::RadiusOutlierRemoval<PCType> outrem;
+	outrem.setInputCloud(cloud_cropped);
+	outrem.setRadiusSearch(0.8);
+	outrem.setMinNeighborsInRadius (2);
+	outrem.setKeepOrganized(true);
+	outrem.filter (*cloud_cropped);
 	std::vector<int> nan_indices;
 	pcl::removeNaNFromPointCloud(*cloud_cropped, *cloud_cropped, nan_indices);
 
 	object_cloud = cloud_cropped;
 	object_cloud->header.frame_id = robot_base_frame_;
-
+	//save point cloud
+	char suffix[30];
+	sprintf(suffix,"frame%02d.ply", data_counter_);
+	std::string pointcloud_path = pointcloud_data_dir + suffix;
+	pcl::PLYWriter ply_saver;
+	// move the point cloud to coordinate origin before saving
+	pcl::PointCloud<PCType>::Ptr cloud_centered = move_point_cloud_to_origin(cloud_cropped); 
+	ply_saver.write(pointcloud_path,*cloud_centered);
+	ROS_INFO("pointcloud is saved");
 	//back project pointcloud to 2d mask
 	pcl::PointCloud<PCType>::Ptr cloud_trans_back(new pcl::PointCloud<PCType>());
 	pcl_ros::transformPointCloud(robot_camera_frame_, *object_cloud, *cloud_trans_back, listener_);
@@ -372,7 +397,7 @@ public:
 	if(point3d.point.y > max_y)
 	  max_y = point3d.point.y;
 	if(point3d.point.z > min_z) //take larger z to remove tabletop
-	  min_z = point3d.point.z + 0.04;
+	  min_z = point3d.point.z + 0.05;
       }
 
     //get and transform points within 2d bounding box
@@ -430,8 +455,45 @@ public:
       }
 	return bbox_3d;
   }
-  
-  bool srvCb(multiple_grasping_pose_learning::getobjectpose::Request& req, multiple_grasping_pose_learning::getobjectpose::Response& res)
+
+  pcl::PointCloud<PCType>::Ptr move_point_cloud_to_origin(pcl::PointCloud<PCType>::Ptr cloud)
+  //move the point cloud centroid to (0,0,0)
+  {
+    pcl::PointCloud<PCType>::Ptr cloud_trans(new pcl::PointCloud<PCType>());
+    Eigen::Vector4f pcaCentroid;
+    pcl::compute3DCentroid(*cloud, pcaCentroid);
+    Eigen::Matrix3f covariance;
+    pcl::computeCovarianceMatrixNormalized(*cloud, pcaCentroid, covariance);
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver(covariance, Eigen::ComputeEigenvectors);
+    Eigen::Matrix3f eigenVectorsPCA = eigen_solver.eigenvectors();
+    Eigen::Vector3f eigenValuesPCA = eigen_solver.eigenvalues();
+    eigenVectorsPCA.col(2) = eigenVectorsPCA.col(0).cross(eigenVectorsPCA.col(1));
+    eigenVectorsPCA.col(0) = eigenVectorsPCA.col(1).cross(eigenVectorsPCA.col(2));
+    eigenVectorsPCA.col(1) = eigenVectorsPCA.col(2).cross(eigenVectorsPCA.col(0));
+    Eigen::Matrix4f tm = Eigen::Matrix4f::Identity();
+    Eigen::Matrix4f tm_inv = Eigen::Matrix4f::Identity();
+    tm.block<3, 3>(0, 0) = eigenVectorsPCA.transpose();   //R. 
+    tm.block<3, 1>(0, 3) = -1.0f * (eigenVectorsPCA.transpose()) *(pcaCentroid.head<3>());//  -R*t                    
+    tm_inv = tm.inverse();
+    pcl::PointCloud<PCType>::Ptr transformedCloud(new pcl::PointCloud<PCType>);
+    pcl::transformPointCloud(*cloud, *transformedCloud, tm);
+    PCType min_p1, max_p1;
+    Eigen::Vector3f c1, c;
+    pcl::getMinMax3D(*transformedCloud, min_p1, max_p1);
+    c1 = 0.5f*(min_p1.getVector3fMap() + max_p1.getVector3fMap());   
+    Eigen::Affine3f tm_inv_aff(tm_inv);
+    pcl::transformPoint(c1, c, tm_inv_aff);   
+    Eigen::Vector3f whd, whd1;
+    whd1 = max_p1.getVector3fMap() - min_p1.getVector3fMap();
+    whd = whd1;
+    float sc1 = (whd1(0) + whd1(1) + whd1(2)) / 3;
+    Eigen::Affine3f transform = Eigen::Affine3f::Identity();
+    transform.translation() << -pcaCentroid(0), -pcaCentroid(1), -pcaCentroid(2);
+    pcl::transformPointCloud (*cloud, *cloud_trans, transform);
+    return cloud_trans;
+  }
+    
+  bool srvCb(multiple_grasping_pose_learning::gettablepose::Request& req, multiple_grasping_pose_learning::gettablepose::Response& res)
   {
 
     string command = req.Command;
@@ -480,16 +542,15 @@ public:
 	return false;
       }
     std::vector<float> result;
-#if 1
+
     Eigen::Vector4f objCentroid;
     pcl::compute3DCentroid(*table_cloud,objCentroid);
 
-#endif
     for(int i=0; i<3; i++)
       {
 	result.push_back(objCentroid(i)*1000); //m to mm in euslisp
       }    
-    res.GraspPose = result;
+    res.Pose = result;
     return true;      
   }
 
