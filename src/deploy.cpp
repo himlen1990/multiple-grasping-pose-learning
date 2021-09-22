@@ -1,3 +1,4 @@
+#include <ros/package.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -249,6 +250,11 @@ public:
 		pcl::PointCloud<PCType>::Ptr bbox_cloud = image_roi_to_pointcloud(candidate_bbox);
 		pcl::PointCloud<PCType>::Ptr object_cloud = background_removal(bbox_cloud,workspace);
 		publish_pointcloud(object_cloud);
+		//save point cloud
+		pcl::PLYWriter ply_saver;
+		string base_dir = ros::package::getPath("multiple_grasping_pose_learning");
+		string point_cloud_save_path = base_dir + "/dataset/deploy_output.ply";
+		ply_saver.write(point_cloud_save_path,*object_cloud);
 		//call grasp_predict_srv to predict grasping pose for the object point cloud
 		std::vector<float> TargetFlatPointCloud = pointCloud_to_FlatPointCloud(object_cloud);
 		grasp_predict_srv.request.TargetObjectFlatPointCloud = TargetFlatPointCloud;
