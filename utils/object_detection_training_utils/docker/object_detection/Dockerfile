@@ -15,6 +15,8 @@ RUN cd ~/Tensorflow/demo/images/ && \
     unzip test.zip && \
     unzip train.zip
 
+COPY docker_train.sh /
+
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 EXPOSE 6006
