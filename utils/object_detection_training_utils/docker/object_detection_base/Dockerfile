@@ -55,7 +55,7 @@ RUN cd ~/ && \
     cp -r ~/multiple-grasping-pose-learning/utils/object_detection_training_utils/* ~/Tensorflow/demo/ && \
     cd ~/Tensorflow/demo/pre-trained-models && \
     wget http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v2_quantized_300x300_coco_2019_01_03.tar.gz && \
-    tar -xvzf ssd_mobilenet_v2_quantized_300x300_coco_2019_01_03.tar.gz    
+    tar -xvzf ssd_mobilenet_v2_quantized_300x300_coco_2019_01_03.tar.gz --no-same-owner
 
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
