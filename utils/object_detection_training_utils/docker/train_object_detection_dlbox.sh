@@ -20,7 +20,8 @@ echo $DATASET_DIR
 DATE=$(date +"%Y%m%d-%H%M%S")
 
 ## DLBOX use personal user id currently
-DLBOX_IP=shifan@dlbox14.jsk.imi.i.u-tokyo.ac.jp
+# DLBOX_IP=shifan@dlbox14.jsk.imi.i.u-tokyo.ac.jp
+DLBOX_IP=shifan@dlbox8.jsk.imi.i.u-tokyo.ac.jp
 
 set -x
 scp -q -r $DATASET_DIR $DLBOX_IP:~/
@@ -33,5 +34,5 @@ cat <<EOF | ssh -t $DLBOX_IP
     tar -xf $DATASET_NAME -C object_detection_docker/object_detection/
     docker build -t object_detection_base object_detection_docker/object_detection_base
     docker build -t object_detection object_detection_docker/object_detection
-    docker run --privileged -i --gpus all object_detection bash docker_train.sh
+    docker run -i --gpus all object_detection bash docker_train.sh
 EOF
