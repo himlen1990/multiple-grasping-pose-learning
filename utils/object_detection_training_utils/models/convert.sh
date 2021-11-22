@@ -1,6 +1,6 @@
 python3 ./export_tflite_ssd_graph.py \
   --pipeline_config_path="my_ssd/pipeline.config" \
-  --trained_checkpoint_prefix="my_ssd/model.ckpt-100000" \
+  --trained_checkpoint_prefix="my_ssd/model.ckpt-2000" \
   --output_directory="./" \
 
 
