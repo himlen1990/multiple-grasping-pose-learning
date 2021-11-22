@@ -29,7 +29,7 @@ RUN conda config --append channels conda-forge && \
 ## pip package for object detection
 RUN source /opt/anaconda3/bin/activate && \
     conda activate aero_train && \
-    pip install Cython pandas scipy==1.5.4 tf-slim==1.1.0 matplotlib==3.3.4 six==1.16.0 opencv-python==4.5.2.52 tensorflow-gpu==1.15.3 && \
+    pip install Cython pandas scipy==1.5.4 tf-slim==1.1.0 matplotlib==3.3.4 six==1.16.0 opencv-python==4.5.2.52 tensorflow-gpu==1.15.3 pyparsing==3.0.4 && \
     cd ~/ && \
     mkdir Tensorflow && \
     cd Tensorflow && \
