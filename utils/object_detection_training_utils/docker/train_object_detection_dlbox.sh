@@ -26,6 +26,7 @@ DLBOX_IP=shifan@dlbox8.jsk.imi.i.u-tokyo.ac.jp
 set -x
 scp -q -r $DATASET_DIR $DLBOX_IP:~/
 cat <<EOF | ssh -t $DLBOX_IP
+    rm -rf object_detection_docker/object_detection object_detection_docker/object_detection_base
     mkdir -p object_detection_docker/object_detection
     mkdir -p object_detection_docker/object_detection_base
     wget https://raw.githubusercontent.com/fanshi14/multiple-grasping-pose-learning/add_dockerfile/utils/object_detection_training_utils/docker/object_detection/Dockerfile -P object_detection_docker/object_detection/
