@@ -49,6 +49,11 @@ RUN cd ~/Tensorflow && \
     cd demo && \
     mkdir images annotations pre-trained-models
 
+# install edgetpu compiler
+RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
+    echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list && \
+    apt-get update && apt-get install -y edgetpu-compiler
+
 ## multiple_grasping_pose_learning
 RUN cd ~/ && \
     git clone https://github.com/himlen1990/multiple-grasping-pose-learning.git && \
