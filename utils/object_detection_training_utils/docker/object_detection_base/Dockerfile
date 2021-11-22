@@ -56,7 +56,9 @@ RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - &
 
 ## multiple_grasping_pose_learning
 RUN cd ~/ && \
-    git clone https://github.com/himlen1990/multiple-grasping-pose-learning.git && \
+    git clone https://github.com/fanshi14/multiple-grasping-pose-learning.git && \
+    cd multiple-grasping-pose-learning && \
+    git checkout add_dockerfile && \
     cp -r ~/multiple-grasping-pose-learning/utils/object_detection_training_utils/* ~/Tensorflow/demo/ && \
     cd ~/Tensorflow/demo/pre-trained-models && \
     wget http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v2_quantized_300x300_coco_2019_01_03.tar.gz && \
