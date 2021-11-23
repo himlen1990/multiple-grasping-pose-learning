@@ -24,7 +24,7 @@ DATE=$(date +"%Y%m%d-%H%M%S")
 DLBOX_IP=shifan@dlbox8.jsk.imi.i.u-tokyo.ac.jp
 
 set -x
-scp -q -r $DATASET_DIR $DLBOX_IP:~/
+scp -q -r $DATASET_DIR $DLBOX_IP:~/$DATE-$DATASET_NAME
 cat <<EOF | ssh -t $DLBOX_IP
     rm -rf object_detection_docker/object_detection object_detection_docker/object_detection_base
     mkdir -p object_detection_docker/object_detection
@@ -32,8 +32,11 @@ cat <<EOF | ssh -t $DLBOX_IP
     wget https://raw.githubusercontent.com/fanshi14/multiple-grasping-pose-learning/add_dockerfile/utils/object_detection_training_utils/docker/object_detection/Dockerfile -P object_detection_docker/object_detection/
     wget https://raw.githubusercontent.com/fanshi14/multiple-grasping-pose-learning/add_dockerfile/utils/object_detection_training_utils/docker/object_detection/docker_train.sh -P object_detection_docker/object_detection/
     wget https://raw.githubusercontent.com/fanshi14/multiple-grasping-pose-learning/add_dockerfile/utils/object_detection_training_utils/docker/object_detection_base/Dockerfile -P object_detection_docker/object_detection_base/
-    tar -xf $DATASET_NAME -C object_detection_docker/object_detection/
+    cp $DATE-$DATASET_NAME/* object_detection_docker/object_detection/ -r
+    mkdir -p $DATE-$DATASET_NAME/learn
     docker build -t object_detection_base object_detection_docker/object_detection_base
     docker build -t object_detection object_detection_docker/object_detection
-    docker run -i --gpus all object_detection bash docker_train.sh
+    wget https://raw.githubusercontent.com/fanshi14/multiple-grasping-pose-learning/add_dockerfile/utils/object_detection_training_utils/docker/object_detection/run_detection.sh
+    bash run_detection.sh $DATE-$DATASET_NAME
 EOF
+scp -r $DLBOX_IP:~/$DATE-$DATASET_NAME/learn $DATASET_DIR
