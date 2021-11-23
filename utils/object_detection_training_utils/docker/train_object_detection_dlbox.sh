@@ -36,7 +36,7 @@ cat <<EOF | ssh -t $DLBOX_IP
     mkdir -p $DATE-$DATASET_NAME/learn
     docker build -t object_detection_base object_detection_docker/object_detection_base
     docker build -t object_detection object_detection_docker/object_detection
-    wget https://raw.githubusercontent.com/fanshi14/multiple-grasping-pose-learning/add_dockerfile/utils/object_detection_training_utils/docker/object_detection/run_detection.sh
+    wget https://raw.githubusercontent.com/fanshi14/multiple-grasping-pose-learning/add_dockerfile/utils/object_detection_training_utils/docker/object_detection/run_detection.sh -O run_detection.sh
     bash run_detection.sh $DATE-$DATASET_NAME
 EOF
 scp -r $DLBOX_IP:~/$DATE-$DATASET_NAME/learn $DATASET_DIR
