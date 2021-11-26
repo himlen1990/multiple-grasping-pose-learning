@@ -1,4 +1,4 @@
-ITERATION_TIMES=$1
+ITERATION_TIMES=ITERATIONS
 
 source /opt/anaconda3/bin/activate
 conda activate aero_train
