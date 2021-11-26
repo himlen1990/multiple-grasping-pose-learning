@@ -50,6 +50,7 @@ fi
 set -x
 docker run --rm --privileged \
        --userns=host \
+       -p 6006:6006 \
        --gpus all \
        --mount type=bind,src=${DATASET_DIR}/learn,dst=/root/Tensorflow/demo/models_test \
        ${TTY_OPT} object_detection /bin/bash -c "source /opt/anaconda3/bin/activate; conda activate aero_train; tensorboard --logdir=/root/Tensorflow/demo/models_test/models/my_ssd/"
