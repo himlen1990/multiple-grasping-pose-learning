@@ -33,12 +33,13 @@ cat <<EOF | ssh -t $DLBOX_IP
     mkdir -p object_detection_docker/object_detection_base
     wget https://raw.githubusercontent.com/fanshi14/multiple-grasping-pose-learning/add_dockerfile/utils/object_detection_training_utils/docker/object_detection/Dockerfile -P object_detection_docker/object_detection/
     wget https://raw.githubusercontent.com/fanshi14/multiple-grasping-pose-learning/add_dockerfile/utils/object_detection_training_utils/docker/object_detection/docker_train.sh -P object_detection_docker/object_detection/
+    sed -i 's/ITERATIONS/$ITERATION_TIMES/g' object_detection_docker/object_detection/docker_train.sh
     wget https://raw.githubusercontent.com/fanshi14/multiple-grasping-pose-learning/add_dockerfile/utils/object_detection_training_utils/docker/object_detection_base/Dockerfile -P object_detection_docker/object_detection_base/
     cp $DATE-$DATASET_NAME/* object_detection_docker/object_detection/ -r
     mkdir -p $DATE-$DATASET_NAME/learn
     docker build -t object_detection_base object_detection_docker/object_detection_base
     docker build -t object_detection object_detection_docker/object_detection
     wget https://raw.githubusercontent.com/fanshi14/multiple-grasping-pose-learning/add_dockerfile/utils/object_detection_training_utils/docker/object_detection/run_detection.sh -O run_detection.sh
-    bash run_detection.sh $DATE-$DATASET_NAME $ITERATION_TIMES
+    bash run_detection.sh $DATE-$DATASET_NAME
 EOF
 scp -r $DLBOX_IP:~/$DATE-$DATASET_NAME/learn $DATASET_DIR

@@ -52,7 +52,7 @@ docker run --rm --privileged \
        --userns=host \
        --gpus all \
        --mount type=bind,src=${DATASET_DIR}/learn,dst=/root/Tensorflow/demo/models_test \
-       ${TTY_OPT} object_detection bash docker_train.sh $2
+       ${TTY_OPT} object_detection bash docker_train.sh
 set +x
 
 if [ $RUN_BASH -eq 0 -a $RUN_TENSORBOARD -eq 0 ]; then
