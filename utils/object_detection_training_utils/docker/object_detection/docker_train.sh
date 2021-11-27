@@ -10,4 +10,4 @@ cd ~/Tensorflow/demo/models
 bash convert.sh $ITERATION_TIMES
 cd ~/Tensorflow/demo
 cp models models_test -r
-chmod 666 -R models_test
+chmod -R a+rx models_test
