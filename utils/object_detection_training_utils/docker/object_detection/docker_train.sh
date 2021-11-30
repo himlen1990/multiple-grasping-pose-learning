@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ITERATION_TIMES=ITERATIONS
 
 source /opt/anaconda3/bin/activate
@@ -10,4 +12,4 @@ cd ~/Tensorflow/demo/models
 bash convert.sh $ITERATION_TIMES
 cd ~/Tensorflow/demo
 cp models models_test -r
-chmod -R a+rx models_test
+# chmod -R a+rx models_test
