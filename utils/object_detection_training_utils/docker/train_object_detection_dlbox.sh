@@ -22,7 +22,6 @@ DATE=$(date +"%Y%m%d-%H%M%S")
 DATASET_NAME_NEW=$DATE-$ITERATION_TIMES-$DATASET_NAME
 
 ## DLBOX use personal user id currently
-# DLBOX_IP=shifan@dlbox14.jsk.imi.i.u-tokyo.ac.jp
 DLBOX_IP=shifan@dlbox6.jsk.imi.i.u-tokyo.ac.jp
 
 set -x
@@ -44,8 +43,8 @@ cat <<EOF | ssh -t $DLBOX_IP
     wget https://raw.githubusercontent.com/fanshi14/multiple-grasping-pose-learning/add_dockerfile/utils/object_detection_training_utils/docker/object_detection/run_tensorboard.sh -O run_tensorboard.sh
     bash run_detection.sh $DATASET_NAME_NEW
 EOF
-mkdir -p $DATASET_DIR/$DATASET_NAME_NEW
-scp -r $DLBOX_IP:~/$DATASET_NAME_NEW/learn $DATASET_DIR/$DATASET_NAME_NEW/
+mkdir -p $DATASET_DIR-$DATE-$ITERATION_TIMES
+scp -r $DLBOX_IP:~/$DATASET_NAME_NEW/learn $DATASET_DIR-$DATE-$ITERATION_TIMES/
 
 # cat <<EOF | ssh -t $DLBOX_IP
 #     bash run_tensorboard.sh $DATASET_NAME_NEW
