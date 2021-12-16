@@ -24,7 +24,7 @@ catkin config -DPYTHON_EXECUTABLE=/usr/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/inc
 catkin build
 ```
 (ref https://github.com/knorth55/coral_usb_ros for environment building)  
-If nothing goes wrong. We can start collect data
+If nothing goes wrong, we can start collect data.  
 May be you should [build aero-ros-pkg manually](https://github.com/seed-solutions/aero-ros-pkg#build-packge ), and then [create eusmodel of aero](https://github.com/jsk-ros-pkg/jsk_robot/tree/master/jsk_aero_robot/aeroeus#create-eusmodel ).
 
 ## Data collection
