@@ -4,6 +4,8 @@ ros package for robot auto data collection and learning different grasping poses
 Please see doc/manual.docx
 
 ## Workspace build(melodic)
+Build ROS with Python3 environment (for tpu)  
+Environment:  Ubuntu18.04 and ROS Melodic
 ```
 sudo apt-get install python3-catkin-pkg-modules python3-rospkg-modules python3-venv python3-empy
 sudo apt-get install python3-opencv
@@ -23,6 +25,7 @@ catkin build
 ```
 (ref https://github.com/knorth55/coral_usb_ros for environment building)  
 If nothing goes wrong. We can start collect data
+May be you should [build aero-ros-pkg manually](https://github.com/seed-solutions/aero-ros-pkg#build-packge ), and then [create eusmodel of aero](https://github.com/jsk-ros-pkg/jsk_robot/tree/master/jsk_aero_robot/aeroeus#create-eusmodel ).
 
 ## Data collection
 launch file for data collection.
