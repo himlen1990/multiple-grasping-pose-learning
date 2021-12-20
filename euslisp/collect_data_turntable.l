@@ -44,6 +44,19 @@
     (format t "image saved")
     ))
 
+(defun save_single_rgb_image()
+  (let (res
+	get-obj-pose-srv
+	obj-pose-res
+	)
+    
+    (setq empty-srv (instance std_srvs::EmptyRequest :init))
+    (setq obj-pose-res (ros::service-call
+			"aero_new_single_rgb_image_collection"
+			empty-srv))
+    (format t "image saved")
+    ))
+
 (defun setup_table()
   (setq *table_pose* (get_table))
   )
@@ -61,7 +74,8 @@
 	  *co*
 	  :ik-group :rarm-upper-body :rotation-axis t
 	  :revert-if-fail nil :look-at-target t)
-    (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
+    ; (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
+    (send *ri* :angle-vector (send *robot* :angle-vector) 4000) ;; for faster
     (objects (list *co* *robot*))
     pre_push_pose
   ))
@@ -72,7 +86,8 @@
 	*co*
 	:ik-group :rarm-upper-body :rotation-axis t
 	:revert-if-fail nil :look-at-target t)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
+  ; (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
+  (send *ri* :angle-vector (send *robot* :angle-vector) 3000) ;; for faster
   (unix:usleep(* 4000 1000))
   (send *co* :translate (float-vector -60 100 0) :world)
   (send *robot* :inverse-kinematics
@@ -89,8 +104,10 @@
 	*co*
 	:ik-group :rarm-upper-body :rotation-axis t
 	:revert-if-fail nil :look-at-target t)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
-  (unix:usleep(* 8000 1000))
+  ; (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
+  (send *ri* :angle-vector (send *robot* :angle-vector) 3000) ;; for faster
+  ; (unix:usleep(* 8000 1000))
+  (unix:usleep(* 3000 1000)) ;; for faster
   (send *co* :translate (float-vector 0 100 -20) :world)
   (send *robot* :inverse-kinematics
 	*co*
@@ -110,25 +127,32 @@
 	*co*
 	:ik-group :rarm-upper-body :rotation-axis t
 	:revert-if-fail nil :look-at-target t)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
+  ; (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
+  (send *ri* :angle-vector (send *robot* :angle-vector) 4000) ;; for faster
   )
   
 (defun collect_data_once()
   (setq pre_push_pose (prepush))
-  (unix:usleep(* 7000 1000))
+  ; (unix:usleep(* 7000 1000))
+  (unix:usleep(* 4000 1000)) ;; for faster
   (first_push)
   (unix:usleep(* 8000 1000))    
   (send *robot* :reset-pose)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
-  (unix:usleep(* 8000 1000))
+  ; (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
+  (send *ri* :angle-vector (send *robot* :angle-vector) 3000) ;; for faster
+  ; (unix:usleep(* 8000 1000))
+  (unix:usleep(* 4000 1000)) ;; for faster
   (save_image)
   ;;reset  *co*  
   (setq *co* (send pre_push_pose :copy-coords))
   (second_push)
-  (unix:usleep(* 8000 1000))
+  ; (unix:usleep(* 8000 1000))
+  (unix:usleep(* 5000 1000)) ;; for faster
   (send *robot* :reset-pose)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
-  (unix:usleep(* 8000 1000))
+  ; (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
+  (send *ri* :angle-vector (send *robot* :angle-vector) 3000) ;; for faster
+  ; (unix:usleep(* 8000 1000))
+  (unix:usleep(* 4000 1000)) ;; for faster
   (save_image)
   ;;do it again
   (setq *co* (send pre_push_pose :copy-coords))
@@ -137,21 +161,46 @@
 	*co*
 	:ik-group :rarm-upper-body :rotation-axis t
 	:revert-if-fail nil :look-at-target t)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
-  (unix:usleep(* 8000 1000))
+  ; (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
+  (send *ri* :angle-vector (send *robot* :angle-vector) 3000) ;; for faster
+  ; (unix:usleep(* 8000 1000))
+  (unix:usleep(* 4000 1000)) ;; for faster
   (first_push)
   (unix:usleep(* 8000 1000))    
   (send *robot* :reset-pose)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
-  (unix:usleep(* 8000 1000))
+  ; (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
+  (send *ri* :angle-vector (send *robot* :angle-vector) 3000) ;; for faster
+  ; (unix:usleep(* 8000 1000))
+  (unix:usleep(* 4000 1000)) ;; for faster
   (save_image)
   (setq *co* (send pre_push_pose :copy-coords))
   (second_push)
-  (unix:usleep(* 8000 1000))
+  ; (unix:usleep(* 8000 1000))
+  (unix:usleep(* 5000 1000)) ;; for faster
   (send *robot* :reset-pose)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
-  (unix:usleep(* 8000 1000))
+  ; (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
+  (send *ri* :angle-vector (send *robot* :angle-vector) 3000) ;; for faster
+  ; (unix:usleep(* 8000 1000))
+  (unix:usleep(* 4000 1000)) ;; for faster
   (save_image)
+  )
+
+(defun save_image_only()
+  (unix:usleep(* 4000 1000)) ;; for faster
+  (save_image)
+  (print "image 1 saved")
+  (unix:usleep(* 6000 1000)) ;; for faster
+  (save_image)
+  (print "image 2 saved")
+  (unix:usleep(* 6000 1000)) ;; for faster
+  (save_image)
+  (print "image 3 saved")
+  (unix:usleep(* 6000 1000)) ;; for faster
+  (save_image)
+  (print "image 4 saved")
+  (unix:usleep(* 6000 1000)) ;; for faster
+  (save_image)
+  (print "image 5 saved")
   )
 
 (setup)
